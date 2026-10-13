@@ -9,7 +9,7 @@ services:
     image: warden:latest
     container_name: warden
     ports:
-      - "3200:3200"          # dashboard/API (STATUS_PORT, default 3200)
+      - "127.0.0.1:3200:3200" # publish only on the host loopback
     environment:
       # Ollama runs on the HOST, not in this container. host-gateway maps
       # host.docker.internal to the host's bridge IP — the same trick the
