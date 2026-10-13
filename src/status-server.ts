@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { execSync, spawn, spawnSync } from 'child_process';
 import http from 'http';
+import { isAllowedDashboardOrigin } from './dashboard-boundary.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -3787,6 +3788,16 @@ export function startStatusServer(d: StatusDeps): void {
   const PANE_COOKIE = 'dockbox-pane-session';
 
   const server = http.createServer(async (req, res) => {
+    // This is an unauthenticated, single-user control plane. Never accept
+    // arbitrary Host / browser Origin headers even on a loopback listener.
+    const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
+    const fetchSite = typeof req.headers['sec-fetch-site'] === 'string'
+      ? req.headers['sec-fetch-site'] : undefined;
+    if (!isAllowedDashboardOrigin(req.headers.host, origin, fetchSite)) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Dashboard origin denied' }));
+      return;
+    }
     const { pathname, params } = parseUrl(req.url || '/');
 
     // Security headers on all responses
@@ -5142,6 +5153,14 @@ export function startStatusServer(d: StatusDeps): void {
   // all share the same live shell.
   const terminalWss = new WebSocketServer({ noServer: true });
   server.on('upgrade', (req, socket, head) => {
+    const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
+    const fetchSite = typeof req.headers['sec-fetch-site'] === 'string'
+      ? req.headers['sec-fetch-site'] : undefined;
+    if (!isAllowedDashboardOrigin(req.headers.host, origin, fetchSite)) {
+      socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+      socket.destroy();
+      return;
+    }
     const url = new URL(req.url || '/', 'http://localhost');
     if (url.pathname !== '/api/terminal') return;
     if (!nodePtyIsAvailable()) {
@@ -5200,7 +5219,8 @@ export function startStatusServer(d: StatusDeps): void {
     });
   });
 
-  const bindHost = process.env.BIND_HOST || '0.0.0.0';
+  // Never expose the unauthenticated agent shell/API on all interfaces by default.
+  const bindHost = process.env.BIND_HOST || '127.0.0.1';
   server.listen(STATUS_PORT, bindHost, () => {
     logger.info({ port: STATUS_PORT, host: bindHost }, 'Warden Dashboard started');
     try { ensureHeartbeatTask(); } catch (e) { logger.warn({ err: e }, 'Heartbeat seed failed'); }
