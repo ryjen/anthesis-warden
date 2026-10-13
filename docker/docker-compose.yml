@@ -20,6 +20,8 @@ services:
       # MARM (if enabled) also stays on the host for now — same gateway IP.
       # - MARM_URL=http://host.docker.internal:8001
       - WORKSPACE_ROOT=/data
+      # Bind inside the container; the host port mapping above stays loopback.
+      - BIND_HOST=0.0.0.0
       # - STATUS_PORT=3200
     extra_hosts:
       - "host.docker.internal:host-gateway"
