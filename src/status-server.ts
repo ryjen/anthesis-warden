@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { execSync, spawn, spawnSync } from 'child_process';
 import http from 'http';
-import { isAllowedDashboardOrigin } from './dashboard-boundary.js';
+import { isAllowedDashboardOrigin, isAllowedDashboardBindHost } from './dashboard-boundary.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -5221,6 +5221,11 @@ export function startStatusServer(d: StatusDeps): void {
 
   // Never expose the unauthenticated agent shell/API on all interfaces by default.
   const bindHost = process.env.BIND_HOST || '127.0.0.1';
+  if (!isAllowedDashboardBindHost(bindHost, process.env.WARDEN_INSECURE_CONTAINER_BIND)) {
+    throw new Error(
+      'Refusing unauthenticated dashboard bind: use loopback or an explicitly isolated container',
+    );
+  }
   server.listen(STATUS_PORT, bindHost, () => {
     logger.info({ port: STATUS_PORT, host: bindHost }, 'Warden Dashboard started');
     try { ensureHeartbeatTask(); } catch (e) { logger.warn({ err: e }, 'Heartbeat seed failed'); }
