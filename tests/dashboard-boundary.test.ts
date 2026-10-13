@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { isAllowedDashboardHost, isAllowedDashboardOrigin, isAllowedDashboardBindHost } from '../src/dashboard-boundary.js';
 
 describe('single-user dashboard host boundary', () => {
@@ -44,5 +45,13 @@ describe('wildcard listener admission', () => {
     expect(isAllowedDashboardBindHost('0.0.0.0', 'I_ACCEPT_RISK')).toBe(true);
     expect(isAllowedDashboardBindHost('192.168.1.100', 'I_ACCEPT_RISK')).toBe(false);
     expect(isAllowedDashboardBindHost('::', 'I_ACCEPT_RISK')).toBe(false);
+  });
+});
+
+describe('dashboard HTTP response policy', () => {
+  it('does not grant wildcard CORS in shared JSON helpers', () => {
+    const server = readFileSync(new URL('../src/status-server.ts', import.meta.url), 'utf8');
+    expect(server).not.toContain("'Access-Control-Allow-Origin': '*'");
+    expect(server).toContain('isAllowedDashboardOrigin(req.headers.host, origin, fetchSite)');
   });
 });

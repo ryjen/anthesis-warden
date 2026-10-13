@@ -431,7 +431,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Access-Control-Allow-Origin': '*',
+  // No blanket browser CORS: the request guard enforces exact local origin.
   'Access-Control-Allow-Headers': 'Content-Type, X-User-Session, X-Admin-Session, x-filename',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
