@@ -51,7 +51,7 @@ describe('wildcard listener admission', () => {
 describe('dashboard response policy integration guard', () => {
   it('does not re-enable wildcard CORS through the JSON response helper', () => {
     const source = readFileSync(new URL('../src/status-server.ts', import.meta.url), 'utf8');
-    expect(source).not.toMatch(/'Access-Control-Allow-Origin': '\\*'/);
+    expect(source).not.toMatch(/'Access-Control-Allow-Origin': '\*'/);
     expect(source).toContain('isAllowedDashboardOrigin(req.headers.host, origin, fetchSite)');
   });
 });
