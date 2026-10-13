@@ -32,3 +32,10 @@ export function isAllowedDashboardOrigin(
     return false;
   }
 }
+
+/** Explicit non-loopback binds are blocked unless the container operator
+ * acknowledges the lack of network authentication. This is not an auth gate. */
+export function isAllowedDashboardBindHost(host: string, explicitContainerRisk?: string): boolean {
+  if (host === '127.0.0.1' || host === 'localhost' || host === '::1') return true;
+  return host === '0.0.0.0' && explicitContainerRisk === 'I_ACCEPT_RISK';
+}
