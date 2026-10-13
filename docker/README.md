@@ -13,7 +13,7 @@ docker compose -f docker/docker-compose.yml up -d --build
 # or plain docker:
 docker build -f docker/Dockerfile -t warden:latest .
 docker run -d --name warden -p 127.0.0.1:3200:3200 \
-  -e BIND_HOST=0.0.0.0 \
+  -e BIND_HOST=0.0.0.0 -e WARDEN_INSECURE_CONTAINER_BIND=I_ACCEPT_RISK \
   --add-host=host.docker.internal:host-gateway \
   -v warden-workspace:/data -v warden-store:/app/store -v warden-data:/app/data \
   warden:latest
