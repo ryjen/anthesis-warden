@@ -22,6 +22,7 @@ services:
       - WORKSPACE_ROOT=/data
       # Bind inside the container; the host port mapping above stays loopback.
       - BIND_HOST=0.0.0.0
+      - WARDEN_INSECURE_CONTAINER_BIND=I_ACCEPT_RISK # safe only with isolated network + host-loopback mapping
       # - STATUS_PORT=3200
     extra_hosts:
       - "host.docker.internal:host-gateway"
