@@ -12,6 +12,7 @@
 # Override the install/workspace locations:
 #   WARDEN_INSTALL_DIR=/opt/warden WARDEN_WORKSPACE=$HOME/warden ./install.sh
 set -e
+umask 077 # runtime config and secret material must be owner-readable only
 
 SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL_DIR="${WARDEN_INSTALL_DIR:-/opt/warden}"
@@ -127,8 +128,9 @@ if [ ! -f "$ENV_FILE" ]; then
 ASSISTANT_NAME=Warden
 TZ=UTC
 
-# Dashboard admin password (required for dashboard login).
-ADMIN_PASSWORD=warden
+# Single-user dashboard has no login/authentication gate.
+# Keep its HTTP and terminal WebSocket endpoint on loopback only.
+BIND_HOST=127.0.0.1
 
 # LLM access — set ONE of these, or run Ollama locally (default URL below).
 #ANTHROPIC_API_KEY=
@@ -171,6 +173,7 @@ ENVEOF
 fi
 # Record the resolved workspace root so manual (non-systemd) launches use it.
 grep -q "^WORKSPACE_ROOT=" "$ENV_FILE" 2>/dev/null || echo "WORKSPACE_ROOT=$WORKSPACE_ROOT" >> "$ENV_FILE"
+chmod 600 "$ENV_FILE"
 
 # ── eyes_ears config template ────────────────────────────────────────
 # One merged config for both eyes (detector) and ears (voice). Copy the

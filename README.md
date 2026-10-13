@@ -1166,3 +1166,12 @@ Warden stole fire from the gods. This one runs on your desktop.
 ## 📜 License
 
 Free for personal, non-commercial use. You can run it, modify it, and fork it for yourself — but you can't make money off this code, a fork of it, or anything built on it. No selling it, no SaaS, no paid services on top of it, no commercial use. Forks inherit the same restriction. See [`LICENSE`](LICENSE) for the full terms.
+## Single-user dashboard security boundary
+
+**The current dashboard is an unauthenticated local control plane**, not a public web service. Active `/api/*` handlers and the terminal WebSocket can mutate local files and execute actions with the operator's privileges. The legacy `ADMIN_PASSWORD` configuration and admin-login endpoints are no longer an access-control mechanism; do not rely on them.
+
+The HTTP server binds to `127.0.0.1` by default. Dashboard requests must use a loopback `Host`, and browser `Origin` must be the exact same origin. Cross-site HTTP requests and terminal WebSocket upgrades are rejected. This is **network isolation, not authentication**: other processes with access to the same machine can still use the local API. Do not set `BIND_HOST=0.0.0.0` on a machine accessible to untrusted peers.
+
+The included Docker Compose profile binds inside the container on `0.0.0.0` *only* with `WARDEN_INSECURE_CONTAINER_BIND=I_ACCEPT_RISK` to support port forwarding, but publishes `127.0.0.1:3200:3200` on the host. Protect all Docker networks and volumes; other containers sharing a trusted network may still be able to reach the container listener. Remote access needs a separately authenticated, explicitly approved gateway with a documented origin/host policy; this project does not currently implement that policy. Do not simply enable a permissive CORS origin or broad port mapping.
+
+The installer provisions owner-only file permissions on `data/env/env`. It does not create an administrator password or security gateway. The public `.bak` copies of dashboard HTML/JS/CSS were inherited from upstream and removed from this fork's current branch, but historical Git and upstream copies remain.
