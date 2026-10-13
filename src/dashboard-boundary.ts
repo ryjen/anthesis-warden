@@ -23,7 +23,9 @@ export function isAllowedDashboardOrigin(
   if (originHeader === undefined) return true;
   try {
     const origin = new URL(originHeader);
-    if (!['http:', 'https:'].includes(origin.protocol) ||
+    // This application serves plain HTTP on loopback, not HTTPS itself.
+    // Do not trust a mismatched scheme based only on a spoofable Host header.
+    if (origin.protocol !== 'http:' ||
         origin.origin !== originHeader || origin.host !== hostHeader) return false;
     return isAllowedDashboardHost(origin.host);
   } catch {
