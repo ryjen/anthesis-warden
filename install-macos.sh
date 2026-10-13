@@ -4,6 +4,7 @@
 # Installs system deps (Homebrew), builds, provisions Radicale, and loads
 # both services as launchd LaunchAgents (auto-start on login, keep-alive).
 set -euo pipefail
+umask 077 # created settings and runtime files must remain owner-private
 
 BOLD='\033[1m'; GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
 ok()   { echo -e "  ${GREEN}✓${NC} $1"; }
@@ -76,6 +77,7 @@ EOF
 else
   ok "data/env/env already present (brought over from the old box?)"
 fi
+chmod 600 data/env/env
 mkdir -p "$HOME/Documents/Warden"
 
 # ── 6. Radicale (PIM hub) ───────────────────────────────────────────────
