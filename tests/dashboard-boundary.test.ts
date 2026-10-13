@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedDashboardHost, isAllowedDashboardOrigin } from '../src/dashboard-boundary.js';
+import { isAllowedDashboardHost, isAllowedDashboardOrigin, isAllowedDashboardBindHost } from '../src/dashboard-boundary.js';
 
 describe('single-user dashboard host boundary', () => {
   it('accepts only loopback HTTP Host names', () => {
