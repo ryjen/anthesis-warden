@@ -18,7 +18,20 @@ function getEnvFilePath(): string {
  * Update or insert key=value pairs in the env file.
  */
 export function writeEnvVars(vars: Record<string, string>): void {
-  const envFile = getEnvFilePath();
+  // Never write secrets into the repo-root .env fallback (it may be a
+  // tracked placeholder or a /dev/null symlink). The runtime file is private.
+  const envFile = path.join(process.cwd(), 'data', 'env', 'env');
+  fs.mkdirSync(path.dirname(envFile), { recursive: true, mode: 0o700 });
+  // Fail closed on symlink targets, including a deliberately planted file.
+  if (fs.existsSync(envFile) && fs.lstatSync(envFile).isSymbolicLink()) {
+    throw new Error('Refusing symlinked runtime env file');
+  }
+  for (const [key, value] of Object.entries(vars)) {
+    if (!/^[A-Z][A-Z0-9_]*$/.test(key) ||
+        typeof value !== 'string' || /[\r\n\0]/.test(value)) {
+      throw new Error('Invalid runtime environment assignment');
+    }
+  }
   let lines: string[] = [];
   try {
     lines = fs.readFileSync(envFile, 'utf-8').split('\n');
@@ -45,7 +58,17 @@ export function writeEnvVars(vars: Record<string, string>): void {
     lines.push(`${key}=${vars[key]}`);
   }
 
-  fs.writeFileSync(envFile, lines.join('\n'));
+  // Opening with O_NOFOLLOW avoids following a replaced symlink on POSIX.
+  // fchmod protects pre-existing files that were created with loose umasks.
+  const fd = fs.openSync(envFile,
+    fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_TRUNC |
+    fs.constants.O_NOFOLLOW, 0o600);
+  try {
+    fs.fchmodSync(fd, 0o600);
+    fs.writeFileSync(fd, lines.join('\n'), 'utf8');
+  } finally {
+    fs.closeSync(fd);
+  }
 }
 
 export function readEnvFile(keys: string[]): Record<string, string> {
