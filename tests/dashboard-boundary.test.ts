@@ -33,3 +33,16 @@ describe('single-user dashboard host boundary', () => {
     expect(isAllowedDashboardOrigin('localhost:3200', undefined, 'same-site')).toBe(false);
   });
 });
+
+describe('wildcard listener admission', () => {
+  it('requires deliberate risk acceptance to bind a container on all interfaces', () => {
+    expect(isAllowedDashboardBindHost('127.0.0.1')).toBe(true);
+    expect(isAllowedDashboardBindHost('localhost')).toBe(true);
+    expect(isAllowedDashboardBindHost('::1')).toBe(true);
+    expect(isAllowedDashboardBindHost('0.0.0.0')).toBe(false);
+    expect(isAllowedDashboardBindHost('0.0.0.0', 'yes')).toBe(false);
+    expect(isAllowedDashboardBindHost('0.0.0.0', 'I_ACCEPT_RISK')).toBe(true);
+    expect(isAllowedDashboardBindHost('192.168.1.100', 'I_ACCEPT_RISK')).toBe(false);
+    expect(isAllowedDashboardBindHost('::', 'I_ACCEPT_RISK')).toBe(false);
+  });
+});
